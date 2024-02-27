@@ -1,0 +1,68 @@
+---
+title: "A simulation and analytical study of a normal distribution with many unexpected errors."
+author: 
+  - Yunzhao Li
+  - Wentao Sun
+date: today
+thanks: "Code and data are available at: https://github.com/yunzhaol/Simulation_accidents.git"
+bibliography: references.bib
+date-format: long
+format: pdf
+editor: visual
+---
+
+# Simulation
+```{r}
+#| echo: false
+#| warning: false
+set.seed(23)
+
+# Make the final 100 observations actually a repeat of the first 100
+n= 1000
+data = rnorm(n , mean = 1, sd = 1)
+data[901:1000] = data[1:100]
+
+# Change half negative draws to be positive
+neg_data_index = which(data < 0)
+num_neg_changed = length(neg_data_index) / 2
+neg_changed_index = sample(neg_data_index, num_neg_changed, replace = TRUE)
+data[neg_data_index] = - data[neg_changed_index]
+
+# Change the decimal place on any value between 1 and 1.1
+data_range_index = which(1 < data & data < 1.1)
+data[data_range_index] = data[data_range_index] / 10
+
+# Check whether the mean of the true data generating process is greater than 0
+mean = mean(data)
+sta_dev = sd(data)
+print(mean)
+print(sta_dev)
+```
+# What I did
+
+I simulated the following situation in order with R code [@citeR]:
+
+Allow that the true data generating process is a Normal distribution with mean of one, and standard deviation of 1. We obtain a sample of 1,000 observations using some instrument.
+
+1.Unknown to us, the instrument has a mistake in it, which means that it has a maximum memory of 900 observations, and begins over-writing at that point, so the final 100 observations are actually a repeat of the first 100.
+
+2.We employ a research assistant to clean and prepare the dataset. During the process of doing this, unknown to us, they accidentally change half of the negative draws to be positive.
+
+3.They additionally, accidentally, change the decimal place on any value between 1 and 1.1, so that, for instance 1 becomes 0.1, and 1.1 would become 0.11.
+
+4.You finally get the cleaned dataset and are interested in understanding whether the mean of the true data generating process is greater than 0.[@tellingstories]
+
+
+
+# What I found
+I found the mean is 1.165457 which is greater than 0 and 1. And the standard deviation is 0.8442421 which is less than the deviation of 1 in the assumption of true data generating process. 
+
+
+# What effect the issues had
+They made the mean higher and the standard deviation lower. They modified some values of the draws. They made final 100 observations a repeat of the first 100, half of the negative value positive and change the decimal place on any value between 1 and 1.1. The effect above made changes to the data we draw in different ways. 
+
+
+# What steps I can put in place to ensure actual analysis has a chance to flag some of these issues
+Compare the mean and standard deviation I get to the one in assumption. If they are different, somewhere must go wrong. Check the value of the draws to see how it changes as each step move on. For example, if some negative values in draws turn positive after cleaning process, we will know mistakes happened here. We can achieve this with union function. By creating a union of the draws before the particular step and the one after the step, then find the difference from showing the draws in the union but not in the one before or after the step. Doing this to each step, we can flag the issues.
+
+# Reference
